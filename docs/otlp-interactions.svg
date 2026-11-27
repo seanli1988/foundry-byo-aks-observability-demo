@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="950" viewBox="0 0 1400 950" role="img" aria-labelledby="title description">
+  <title id="title">Vacation agent OTLP interaction diagram</title>
+  <desc id="description">User requests are served by a Foundry hosted agent on AKS. Its OpenTelemetry SDK exports authenticated HTTP protobuf to Azure Monitor ingestion. A data collection rule routes metrics to Managed Prometheus and logs and spans to Log Analytics. Grafana queries both stores with its own managed identity.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/></marker>
+    <style>
+      text { font-family: "Segoe UI", Arial, sans-serif; fill: #0f172a; }
+      .actor { fill: #eff6ff; stroke: #94a3b8; stroke-width: 1.5; }
+      .life { stroke: #cbd5e1; stroke-dasharray: 5 5; }
+      .message { stroke: #334155; stroke-width: 1.7; marker-end: url(#arrow); }
+      .reply { stroke-dasharray: 5 4; }
+      .label { font-size: 12px; paint-order: stroke; stroke: #fff; stroke-width: 5px; stroke-linejoin: round; }
+    </style>
+  </defs>
+  <rect width="1400" height="950" fill="#fff"/>
+  <text x="40" y="35" font-size="25" font-weight="650">Vacation agent: OTLP data flow</text>
+  <text x="40" y="59" font-size="14" fill="#475569">Native Azure ingestion over HTTPS + protobuf; no collector, Prometheus scrape endpoint, or extra AKS ports.</text>
+  <g text-anchor="middle" font-size="13" font-weight="600">
+    <rect class="actor" x="15" y="82" width="110" height="54" rx="6"/><text x="70" y="104">User /</text><text x="70" y="123">Playground</text>
+    <rect class="actor" x="160" y="82" width="130" height="54" rx="6"/><text x="225" y="104">Vacation agent</text><text x="225" y="123">Foundry on AKS</text>
+    <rect class="actor" x="310" y="82" width="130" height="54" rx="6"/><text x="375" y="104">Foundry model</text><text x="375" y="123">gpt-oss-120b</text>
+    <rect class="actor" x="460" y="82" width="130" height="54" rx="6"/><text x="525" y="104">OpenTelemetry</text><text x="525" y="123">SDK / exporters</text>
+    <rect class="actor" x="610" y="82" width="130" height="54" rx="6"/><text x="675" y="104">Microsoft</text><text x="675" y="123">Entra ID</text>
+    <rect class="actor" x="760" y="82" width="130" height="54" rx="6"/><text x="825" y="104">Azure Monitor</text><text x="825" y="123">DCE + DCR</text>
+    <rect class="actor" x="910" y="82" width="130" height="54" rx="6"/><text x="975" y="104">Managed</text><text x="975" y="123">Prometheus</text>
+    <rect class="actor" x="1060" y="82" width="130" height="54" rx="6"/><text x="1125" y="104">Log Analytics</text><text x="1125" y="123">OTelLogs / Spans</text>
+    <rect class="actor" x="1215" y="82" width="130" height="54" rx="6"/><text x="1280" y="104">Azure Managed</text><text x="1280" y="123">Grafana</text>
+  </g>
+  <g class="life">
+    <path d="M70 136V850"/><path d="M225 136V850"/><path d="M375 136V850"/><path d="M525 136V850"/><path d="M675 136V850"/><path d="M825 136V850"/><path d="M975 136V850"/><path d="M1125 136V850"/><path d="M1280 136V850"/>
+  </g>
+  <g class="message">
+    <path d="M70 175H225"/>
+    <path d="M225 215H375"/>
+    <path class="reply" d="M375 255H225"/>
+    <path d="M225 300H525"/>
+    <path d="M525 340H675"/>
+    <path class="reply" d="M675 375H525"/>
+    <path d="M525 420H825"/>
+    <path d="M525 455H825"/>
+    <path d="M525 490H825"/>
+    <path d="M825 535H975"/>
+    <path d="M825 580H1125"/>
+    <path d="M1280 625H675"/>
+    <path d="M1280 675H975"/>
+    <path class="reply" d="M975 710H1280"/>
+    <path d="M1280 750H1125"/>
+    <path class="reply" d="M1125 785H1280"/>
+    <path class="reply" d="M1280 830H70"/>
+  </g>
+  <g class="label" text-anchor="middle">
+    <text x="147" y="167">Vacation prompt</text>
+    <text x="300" y="207">Model request</text>
+    <text x="300" y="247">Streamed reply + usage</text>
+    <text x="375" y="292">Record duration, tokens, outcome, prompt + visible reply*</text>
+    <text x="600" y="332">Agent identity token</text>
+    <text x="600" y="367">monitor.azure.com token</text>
+    <text x="675" y="412">POST /otlp/v1/metrics + bearer token</text>
+    <text x="675" y="447">POST /otlp/v1/logs + bearer token</text>
+    <text x="675" y="482">POST /otlp/v1/traces + bearer token</text>
+    <text x="900" y="527">DCR: delta metrics</text>
+    <text x="975" y="572">DCR: correlated logs and model spans</text>
+    <text x="977" y="617">Grafana's separate managed identity + scoped read roles</text>
+    <text x="1127" y="667">PromQL queries</text>
+    <text x="1127" y="702">Counters, tokens, native histograms</text>
+    <text x="1202" y="742">KQL queries</text>
+    <text x="1202" y="777">Message / span rows</text>
+    <text x="675" y="822">Dashboard panels: correlate metrics, logs and spans by time and TraceId</text>
+  </g>
+  <rect x="40" y="869" width="1320" height="58" rx="6" fill="#f1f5f9"/>
+  <text x="55" y="891" font-size="13">* Message capture is opt-in: latest user text + visible assistant reply, not headers, credentials, system instructions or reasoning.</text>
+  <text x="55" y="913" font-size="13">Metrics export every 10s; logs/spans batch about every 2s. Ingestion adds delay. Captured messages retain for 30 days.</text>
+</svg>

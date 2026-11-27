@@ -1,0 +1,11 @@
+{
+  "uid": "vacation-azure-monitor",
+  "name": "Vacation Azure Monitor",
+  "type": "grafana-azure-monitor-datasource",
+  "access": "proxy",
+  "jsonData": {
+    "azureAuthType": "msi",
+    "cloudName": "azuremonitor",
+    "subscriptionId": "<AZURE_SUBSCRIPTION_ID>"
+  }
+}

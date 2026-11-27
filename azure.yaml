@@ -1,0 +1,27 @@
+name: vacation-observability-demo
+services:
+  vacation-planner:
+    host: azure.ai.agent
+    project: src/vacation-planner
+    language: docker
+    docker:
+      remoteBuild: true
+    kind: hosted
+    name: vacation-planner
+    description: Vacation planning assistant with OpenTelemetry metrics, logs, traces and opt-in message capture.
+    protocols:
+      - protocol: responses
+        version: 2.0.0
+    env:
+      AZURE_AI_MODEL_DEPLOYMENT_NAME: ${AZURE_AI_MODEL_DEPLOYMENT_NAME}
+      DEMO_CAPTURE_MESSAGES: 'false'
+      DEMO_OTLP_METRICS_ENDPOINT: ${DEMO_OTLP_METRICS_ENDPOINT}
+      DEMO_OTLP_LOGS_ENDPOINT: ${DEMO_OTLP_LOGS_ENDPOINT}
+      DEMO_OTLP_TRACES_ENDPOINT: ${DEMO_OTLP_TRACES_ENDPOINT}
+      OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE: DELTA
+      OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION: base2_exponential_bucket_histogram
+      OTEL_SERVICE_NAME: vacation-planner
+    container:
+      resources:
+        cpu: '0.5'
+        memory: 1Gi

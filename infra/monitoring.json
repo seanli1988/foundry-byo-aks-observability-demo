@@ -1,0 +1,104 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {"type": "string", "defaultValue": "eastus2"},
+    "suffix": {"type": "string", "minLength": 1, "maxLength": 8}
+  },
+  "variables": {
+    "law": "[concat('log-vacation-', parameters('suffix'))]",
+    "amw": "[concat('prom-vacation-', parameters('suffix'))]",
+    "appi": "[concat('appi-vacation-', parameters('suffix'))]",
+    "dce": "[concat('dce-vacation-', parameters('suffix'))]",
+    "dcr": "[concat('dcr-vacation-', parameters('suffix'))]",
+    "grafana": "[concat('graf-vacation-', parameters('suffix'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2023-09-01",
+      "name": "[variables('law')]",
+      "location": "[parameters('location')]",
+      "properties": {"sku": {"name": "PerGB2018"}, "retentionInDays": 30, "workspaceCapping": {"dailyQuotaGb": 1}}
+    },
+    {
+      "type": "Microsoft.Monitor/accounts",
+      "apiVersion": "2023-04-03",
+      "name": "[variables('amw')]",
+      "location": "[parameters('location')]",
+      "properties": {"publicNetworkAccess": "Enabled"}
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02",
+      "name": "[variables('appi')]",
+      "location": "[parameters('location')]",
+      "kind": "web",
+      "dependsOn": ["[resourceId('Microsoft.OperationalInsights/workspaces', variables('law'))]"],
+      "properties": {
+        "Application_Type": "web",
+        "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('law'))]",
+        "DisableLocalAuth": true
+      }
+    },
+    {
+      "type": "Microsoft.Insights/dataCollectionEndpoints",
+      "apiVersion": "2024-03-11",
+      "name": "[variables('dce')]",
+      "location": "[parameters('location')]",
+      "properties": {"networkAcls": {"publicNetworkAccess": "Enabled"}}
+    },
+    {
+      "type": "Microsoft.Insights/dataCollectionRules",
+      "apiVersion": "2024-03-11",
+      "name": "[variables('dcr')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/dataCollectionEndpoints', variables('dce'))]",
+        "[resourceId('Microsoft.Insights/components', variables('appi'))]",
+        "[resourceId('Microsoft.Monitor/accounts', variables('amw'))]"
+      ],
+      "properties": {
+        "description": "Native OTLP ingestion for the vacation agent; metrics to Managed Prometheus, logs and traces to Log Analytics.",
+        "dataCollectionEndpointId": "[resourceId('Microsoft.Insights/dataCollectionEndpoints', variables('dce'))]",
+        "references": {"applicationInsights": [{"resourceId": "[resourceId('Microsoft.Insights/components', variables('appi'))]", "name": "applicationInsightsResource"}]},
+        "directDataSources": {
+          "otelMetrics": [{"streams": ["Custom-Metrics-Otel"], "enrichWithResourceAttributes": ["*"], "enrichWithReference": "applicationInsightsResource", "name": "vacationMetrics"}],
+          "otelLogs": [{"streams": ["Microsoft-OTel-Logs"], "enrichWithResourceAttributes": ["*"], "enrichWithReference": "applicationInsightsResource", "replaceResourceIdWithReference": true, "name": "vacationLogs"}],
+          "otelTraces": [{"streams": ["Microsoft-OTel-Traces-Spans", "Microsoft-OTel-Traces-Events", "Microsoft-OTel-Traces-Resources"], "enrichWithResourceAttributes": ["*"], "enrichWithReference": "applicationInsightsResource", "replaceResourceIdWithReference": true, "name": "vacationTraces"}]
+        },
+        "destinations": {
+          "monitoringAccounts": [{"accountResourceId": "[resourceId('Microsoft.Monitor/accounts', variables('amw'))]", "name": "prometheus"}],
+          "logAnalytics": [{"workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('law'))]", "name": "logs"}]
+        },
+        "dataFlows": [
+          {"streams": ["Custom-Metrics-Otel"], "destinations": ["prometheus"]},
+          {"streams": ["Microsoft-OTel-Logs", "Microsoft-OTel-Traces-Spans", "Microsoft-OTel-Traces-Events", "Microsoft-OTel-Traces-Resources"], "destinations": ["logs"]}
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Dashboard/grafana",
+      "apiVersion": "2023-09-01",
+      "name": "[variables('grafana')]",
+      "location": "[parameters('location')]",
+      "sku": {"name": "Standard"},
+      "identity": {"type": "SystemAssigned"},
+      "properties": {
+        "grafanaMajorVersion": "12",
+        "apiKey": "Disabled",
+        "publicNetworkAccess": "Enabled",
+        "zoneRedundancy": "Disabled"
+      }
+    }
+  ],
+  "outputs": {
+    "monitorWorkspaceId": {"type": "string", "value": "[resourceId('Microsoft.Monitor/accounts', variables('amw'))]"},
+    "logWorkspaceId": {"type": "string", "value": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('law'))]"},
+    "appInsightsId": {"type": "string", "value": "[resourceId('Microsoft.Insights/components', variables('appi'))]"},
+    "dcrId": {"type": "string", "value": "[resourceId('Microsoft.Insights/dataCollectionRules', variables('dcr'))]"},
+    "dcrImmutableId": {"type": "string", "value": "[reference(resourceId('Microsoft.Insights/dataCollectionRules', variables('dcr')), '2024-03-11').immutableId]"},
+    "logsIngestion": {"type": "string", "value": "[reference(resourceId('Microsoft.Insights/dataCollectionEndpoints', variables('dce')), '2024-03-11').logsIngestion.endpoint]"},
+    "metricsIngestion": {"type": "string", "value": "[reference(resourceId('Microsoft.Insights/dataCollectionEndpoints', variables('dce')), '2024-03-11').metricsIngestion.endpoint]"}
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "uid": "vacation-prometheus",
+  "name": "Vacation Managed Prometheus",
+  "type": "prometheus",
+  "access": "proxy",
+  "url": "https://<AZURE_MONITOR_WORKSPACE_QUERY_HOST>",
+  "jsonData": {
+    "httpMethod": "POST",
+    "azureAuth": true,
+    "azureCredentials": {"authType": "msi", "azureCloud": "AzureCloud"},
+    "timeInterval": "10s",
+    "prometheusType": "Prometheus"
+  }
+}

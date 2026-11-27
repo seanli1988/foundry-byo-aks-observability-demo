@@ -1,0 +1,6 @@
+agent-framework-foundry==1.16.2
+agent-framework-openai==1.18.2
+agent-framework-core==1.26.0
+agent-framework-foundry-hosting==1.0.0b261112
+opentelemetry-sdk==1.45.2
+opentelemetry-exporter-otlp-proto-http==1.45.2

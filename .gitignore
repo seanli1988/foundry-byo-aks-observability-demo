@@ -1,0 +1,11 @@
+.azure/
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.py[cod]
+infra/dashboard.json
+traffic-results.json
+dashboard-verification.json
+message-capture-verification.json
